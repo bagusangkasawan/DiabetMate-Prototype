@@ -1,5 +1,6 @@
 import streamlit as st
 import joblib
+import easyocr
 import pandas as pd
 import requests
 
@@ -100,12 +101,20 @@ LANGUAGES = {
     }
 }
 
+for lang_pack in LANGUAGES.values():
+    lang_pack["ocr_title"] = "📸 OCR Food Composition"
+    lang_pack["ocr_description"] = "Unggah foto komposisi produk. Teks hasil OCR akan dirangkum oleh AI agar mudah dipahami (multilingual)."
+    lang_pack["ocr_upload"] = "📷 Upload Product Image"
+    lang_pack["ocr_button"] = "🔍 Extract & Summarize"
+    lang_pack["ocr_result"] = "### 📄 OCR Extracted Text"
+    lang_pack["ocr_summary"] = "### 🤖 AI Summary"
+
 # --- Sidebar navigasi ---
 st.set_page_config(page_title="🩺 DiabetMate", layout="wide")
 lang = st.sidebar.selectbox("🌐 Pilih Bahasa / Select Language", options=["Bahasa", "English"])
 L = LANGUAGES[lang]
 
-page = st.sidebar.selectbox("📌 Pilih Halaman / Select Page", [L["title"], L["nutrition_title"], L["chatbot_title"]])
+page = st.sidebar.selectbox("📌 Pilih Halaman / Select Page", [L["title"], L["nutrition_title"], L["chatbot_title"], L["ocr_title"]])
 
 # --- HALAMAN PREDIKSI DIABETES ---
 if page == L["title"]:
@@ -169,7 +178,7 @@ if page == L["title"]:
 
         prob = model.predict_proba(input_df)[0][1] if hasattr(model, "predict_proba") else None
 
-        st.subheader("📊 Hasil Prediksi")
+        st.subheader("📊 Hasil Prediksi / Prediction Result")
 
         if prob < 0.3:
             risk_label = L["risk_low"]
@@ -259,7 +268,7 @@ elif page == L["chatbot_title"]:
             if not GEMINI_API_KEY:
                 placeholder.error("API key tidak ditemukan di st.secrets!")
             else:
-                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent"
+                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
                 headers = {
                     "Content-Type": "application/json",
                     "X-goog-api-key": GEMINI_API_KEY
@@ -293,3 +302,61 @@ elif page == L["chatbot_title"]:
 
         # Tambahkan ke history
         st.session_state.chat_history.append({"role": "assistant", "message": reply_text})
+
+# --- HALAMAN OCR KOMPOSISI PRODUK ---
+elif page == L["ocr_title"]:
+    st.title(L["ocr_title"])
+    st.write(L["ocr_description"])
+
+    uploaded_file = st.file_uploader(L["ocr_upload"], type=["jpg", "jpeg", "png"])
+    if uploaded_file is not None:
+        if st.button(L["ocr_button"]):
+            with st.spinner("🔎 Extracting text..."):
+                # EasyOCR reader (support multilingual, default en+id)
+                reader = easyocr.Reader(['en', 'id'])
+                result = reader.readtext(uploaded_file.read(), detail=0)
+                extracted_text = "\n".join(result)
+
+            if extracted_text.strip():
+                st.markdown(f"{L['ocr_result']}\n\n{extracted_text}")
+
+                # Kirim ke Gemini untuk penjelasan
+                GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
+                if not GEMINI_API_KEY:
+                    st.error("API key not found in st.secrets!")
+                else:
+                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+                    headers = {
+                        "Content-Type": "application/json",
+                        "X-goog-api-key": GEMINI_API_KEY
+                    }
+                    payload = {
+                        "contents": [
+                            {"parts": [{"text": extracted_text}]}
+                        ],
+                        "systemInstruction": {
+                            "parts": [{
+                                "text": (
+                                    "You are a helpful AI nutritionist. "
+                                    "Summarize the product's composition clearly. "
+                                    "Highlight whether it is suitable for diabetics. "
+                                    "Answer in the same language as the input text if possible."
+                                )
+                            }]
+                        }
+                    }
+
+                    with st.spinner("🤖 Summarizing with AI..."):
+                        response = requests.post(url, headers=headers, json=payload)
+
+                    if response.status_code == 200:
+                        try:
+                            ai_summary = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                            st.markdown(f"{L['ocr_summary']}\n\n{ai_summary}")
+                        except Exception:
+                            st.error("Failed to parse AI response.")
+                    else:
+                        st.error(f"Error: {response.status_code} {response.text}")
+            else:
+                st.warning("No text detected in the image.")
+                

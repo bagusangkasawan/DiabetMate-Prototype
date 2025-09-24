@@ -2,5 +2,6 @@ streamlit==1.38.0
 pandas==2.2.3
 scikit-learn==1.6.1
 joblib==1.4.2
+easyocr==1.7.2
 mlxtend==0.23.4
 requests==2.32.3
