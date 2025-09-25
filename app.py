@@ -59,6 +59,7 @@ LANGUAGES = {
         "ocr_button": "🔍 Extract & Summarize",
         "ocr_result": "### 📄 OCR Extracted Text",
         "ocr_summary": "### 🤖 AI Summary",
+        "ocr_system_prompt": "You are an AI nutritionist, summarize the product composition and state if it is safe for people with diabetes.",
         "ocr_spinner_extract": "🔎 Extracting text...",
         "ocr_spinner_summarize": "🤖 Summarizing with AI...",
         "ocr_no_text": "No text detected in the image."
@@ -113,6 +114,7 @@ LANGUAGES = {
         "ocr_button": "🔍 Ekstrak & Rangkum",
         "ocr_result": "### 📄 Teks Hasil Ekstraksi OCR",
         "ocr_summary": "### 🤖 Rangkuman AI",
+        "ocr_system_prompt": "Anda adalah AI nutrisionis, ringkas komposisi produk dan sebutkan apakah aman untuk penderita diabetes.",
         "ocr_spinner_extract": "🔎 Mengekstrak teks...",
         "ocr_spinner_summarize": "🤖 Merangkum dengan AI...",
         "ocr_no_text": "Tidak ada teks yang terdeteksi pada gambar."
@@ -338,21 +340,13 @@ elif page == L["ocr_title"]:
                         "Content-Type": "application/json",
                         "X-goog-api-key": GEMINI_API_KEY
                     }
-                    # System prompt for Gemini, ensures consistent behavior
-                    system_prompt_ocr = (
-                        "You are a helpful AI nutritionist. "
-                        "Summarize the product's composition clearly. "
-                        "Highlight whether it is suitable for diabetics. "
-                        "Write in a polite, second-person perspective. "
-                        "Answer in the same language as the input text if possible."
-                    )
                     
                     payload = {
                         "contents": [
                             {"parts": [{"text": extracted_text}]}
                         ],
                         "systemInstruction": {
-                            "parts": [{"text": system_prompt_ocr}]
+                            "parts": [{"text": L["ocr_system_prompt"]}]
                         }
                     }
 
