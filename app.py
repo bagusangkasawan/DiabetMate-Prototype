@@ -218,7 +218,7 @@ elif page == L["nutrition_title"]:
             if not GEMINI_API_KEY:
                 st.error("API key not found!")
             else:
-                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
                 headers = {
                     "Content-Type": "application/json",
                     "X-goog-api-key": GEMINI_API_KEY
@@ -278,7 +278,7 @@ elif page == L["chatbot_title"]:
             if not GEMINI_API_KEY:
                 placeholder.error("API key not found!")
             else:
-                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
                 headers = {
                     "Content-Type": "application/json",
                     "X-goog-api-key": GEMINI_API_KEY
@@ -335,7 +335,7 @@ elif page == L["ocr_title"]:
                 if not GEMINI_API_KEY:
                     st.error("API key not found!!")
                 else:
-                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
                     headers = {
                         "Content-Type": "application/json",
                         "X-goog-api-key": GEMINI_API_KEY
